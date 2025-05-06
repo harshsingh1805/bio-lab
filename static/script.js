@@ -112,3 +112,12 @@ document.getElementById('exportBtn').onclick = () => {
     a.click();
     URL.revokeObjectURL(url);
 };
+
+
+// 🧩 Force Plotly to resize if window size changes
+window.addEventListener('resize', () => {
+    const plotEl = document.getElementById('plot');
+    if (plotEl && plotEl.children.length > 0) {
+        Plotly.Plots.resize(plotEl);
+    }
+});

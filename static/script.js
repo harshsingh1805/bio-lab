@@ -1,5 +1,8 @@
 let allRecords = [];
 
+let currentPage = 1;
+const itemsPerPage = 100;
+
 const form = document.getElementById('uploadForm');
 const loading = document.getElementById('loading');
 
@@ -42,7 +45,24 @@ function renderSelectedRecord() {
     const data = allRecords[index];
     const filteredFeatures = data.features.filter(f => filter === 'all' || f.type === filter);
 
-    const genes = filteredFeatures.map((f, i) => ({
+    const plotDiv = document.getElementById('plot');
+    const detailsDiv = document.getElementById('details');
+
+    // Always show metadata
+    detailsDiv.textContent = JSON.stringify(data.metadata, null, 2);
+
+    // ✅ Stop here if no features exist (FASTA file)
+    if (filteredFeatures.length === 0) {
+        plotDiv.innerHTML = '<div style="color: gray; font-style: italic;">No features to display for this record (FASTA files do not contain gene/CDS annotations).</div>';
+        return; // ✅ Prevents plotting empty graph
+    }
+
+    const maxFeatures = 100;
+    if (filteredFeatures.length > maxFeatures) {
+        alert(`Showing only first ${maxFeatures} of ${filteredFeatures.length} features`);
+    }
+
+    const genes = filteredFeatures.slice(0, maxFeatures).map((f, i) => ({
         x: [f.start, f.end],
         y: [i, i],
         mode: 'lines',
@@ -51,6 +71,8 @@ function renderSelectedRecord() {
         hovertext: (f.product && f.product.trim()) || f.name || f.type || 'No info',
         hoverinfo: 'text'
     }));
+
+    loading.style.display = 'block';
 
     Plotly.newPlot('plot', genes, {
         title: `Features: ${data.metadata.name}`,
@@ -73,8 +95,9 @@ function renderSelectedRecord() {
         alert(`Feature: ${feature.name}\nFrom: ${feature.x[0]} to ${feature.x[1]}\nInfo: ${feature.hovertext}`);
     });
 
-    document.getElementById('details').textContent = JSON.stringify(data.metadata, null, 2);
+    loading.style.display = 'none';
 }
+
 
 document.getElementById('exportBtn').onclick = () => {
     const index = document.getElementById('recordSelector').value;
